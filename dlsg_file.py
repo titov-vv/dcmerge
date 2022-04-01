@@ -1,13 +1,16 @@
 import logging
 
+
 class DlsgFile:
     LENGTH_SIZE = 4
     HEADER2021 = "DLSG            Decl20210103FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
     FOOTER = '\0'
+    SECTION_PREFIX = '@'
 
     # Loads data from given file into internal class structures
     def __init__(self, filename):
         self._records = []
+        self._sections = []
         self._filename = filename
         logging.debug(f"Loading file: {filename}")
 
@@ -17,6 +20,7 @@ class DlsgFile:
         if self.header != self.HEADER2021:
             raise ValueError("Unsupported format of declaration file")
         self._split_records(raw_data)
+        self._split_sections()
 
     # Appends data from another DlsgFile object referred by dlsg parameter
     def append(self, dlsg):
@@ -36,10 +40,30 @@ class DlsgFile:
                 break
             try:
                 length = int(length_field)
-            except Exception as e:
-                logging.fatal(f"Invalid record size at position {pos}: '{length_field}'")
-                raise e
+            except ValueError:
+                raise ValueError(f"Invalid record size at position {pos}: '{length_field}'")
             pos += self.LENGTH_SIZE
             self._records.append(data[pos: pos + length])
             pos = pos + length
         logging.debug(f"Declaration {self._filename} content: {self._records}")
+
+    def _split_sections(self):
+        while len(self._records) > 0:
+            section_name = self._records.pop(0)
+            if section_name[0] != self.SECTION_PREFIX:
+                raise ValueError(f"Invalid section prefix: {section_name}")
+            self._sections.append(DlsgSection(section_name, self._records))
+        logging.debug(f"Sections loaded: {[s.tag() for s in self._sections]}")
+
+
+class DlsgSection:
+    SECTION_PREFIX = '@'
+
+    def __init__(self, name, records):
+        self._tag = name
+        self._records = []
+        while (len(records) > 0) and (records[0][:1] != self.SECTION_PREFIX):
+            self._records.append(records.pop(0))
+
+    def tag(self) -> str:
+        return self._tag
