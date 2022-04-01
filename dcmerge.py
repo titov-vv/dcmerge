@@ -7,7 +7,7 @@ from dlsg_file import DlsgFile
 
 def get_cmd_line_args():
     parser = argparse.ArgumentParser(
-        usage="%(prog)s -b [base_file] -a [addition1] [addition2] ...",
+        usage="%(prog)s -b [base_file] -a [addition1] [addition2] ... -o [output_file]",
         description="Merger for russian tax software files"
     )
     parser.add_argument('-b', '--base', required=True, metavar="base_file.dc1",
