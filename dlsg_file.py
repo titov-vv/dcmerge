@@ -6,6 +6,9 @@ class DlsgFile:
     HEADER2021 = "DLSG            Decl20210103FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
     FOOTER = '\0'
     SECTION_PREFIX = '@'
+    merge_list = {
+        '@DeclForeign': '@CurrencyIncome'
+    }
 
     # Loads data from given file into internal class structures
     def __init__(self, filename):
@@ -23,9 +26,22 @@ class DlsgFile:
         self._split_records(raw_data)
         self._split_sections()
 
-    # Appends data from another DlsgFile object referred by dlsg parameter
+    # Appends data from another DlsgFile object referred by dlsg parameter into current object
+    # Only sections from self.merge_list are processed
     def append(self, dlsg):
-        pass
+        for section in self.merge_list:
+            dst = self.get_section(section)
+            dst_size = dst.get_child_count()
+            last_child = self.get_section(self.merge_list[section] + f"{(dst_size - 1):04d}")
+            last_idx = self._sections.index(last_child)
+            src = dlsg.get_section(section)
+            src_size = src.get_child_count()
+            for i in range(src_size):
+                child = dlsg.get_section(self.merge_list[section] + f"{i:04d}")
+                child.update_tag(self.merge_list[section] + f"{(dst_size + i):04d}")
+                self._sections.insert(last_idx + 1, child)
+                last_idx += 1
+            dst.set_child_count(dst_size + src_size)
 
     # Saves current data into file filename
     def save(self, filename):
@@ -39,6 +55,13 @@ class DlsgFile:
         raw_data += self._footer
         with open(filename, "w", encoding='cp1251') as taxes:
             taxes.write(raw_data)
+
+    # Returns section from current data structure
+    def get_section(self, section_name):
+        section = [section for section in self._sections if section.tag() == section_name]
+        if len(section) != 1:
+            raise ValueError(f"Section {section_name} was not found")
+        return section[0]
 
     # this method splits declaration data into records stored in self._records
     def _split_records(self, data):
@@ -78,6 +101,20 @@ class DlsgSection:
     def tag(self) -> str:
         return self._tag
 
+    def update_tag(self, new_tag):
+        self._tag = new_tag
+
     def write(self, records):
         records.append(self._tag)
         records.extend(self._records)
+
+    # Returns a number of next elements that belongs to this section
+    def get_child_count(self) -> int:
+        try:
+            count = int(self._records[0])
+        except ValueError:
+            raise ValueError("Can't get number of elements")
+        return count
+
+    def set_child_count(self, number):
+        self._records[0] = str(number)

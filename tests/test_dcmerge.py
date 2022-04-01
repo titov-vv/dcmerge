@@ -9,5 +9,5 @@ def test_dcmerge(monkeypatch, tmp_path):
     with monkeypatch.context() as m:
         m.setattr(sys, 'argv', ['dcmerge', '--base', './base.dc1', '--add', './delta.dc1', '--out', output])
         assert main() is None
-        assert filecmp.cmp('./base.dc1', output)
+        assert filecmp.cmp('./result.dc1', output)
         os.remove(output)
