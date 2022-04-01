@@ -2,6 +2,7 @@
 import os
 import logging
 import argparse
+from dlsg_file import DlsgFile
 
 
 def get_cmd_line_args():
@@ -21,8 +22,12 @@ def main():
     logging.basicConfig(level=LOGLEVEL)
 
     args = get_cmd_line_args()
-    print(f"B: {args.base}")
-    print(f"A: {args.add}")
+
+    base_file = DlsgFile(args.base)
+    for add_file in args.add:
+        addon = DlsgFile(add_file)
+        base_file.append(addon)
+    base_file.save()
 
 
 if __name__ == '__main__':
