@@ -14,6 +14,8 @@ def get_cmd_line_args():
                         help="Name of base file where to append data")
     parser.add_argument('-a', '--add', required=True, nargs='+', metavar="additional_file.dc1",
                         help="Name of file(s) to merge into base file")
+    parser.add_argument('-o', '--out', required=True, metavar="output_file.dc1",
+                        help="Output file name to store the result")
     return parser.parse_args()
 
 
@@ -27,7 +29,7 @@ def main():
     for add_file in args.add:
         addon = DlsgFile(add_file)
         base_file.append(addon)
-    base_file.save()
+    base_file.save(args.out)
 
 
 if __name__ == '__main__':

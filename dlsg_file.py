@@ -11,6 +11,7 @@ class DlsgFile:
     def __init__(self, filename):
         self._records = []
         self._sections = []
+        self._footer = ''
         self._filename = filename
         logging.debug(f"Loading file: {filename}")
 
@@ -26,9 +27,18 @@ class DlsgFile:
     def append(self, dlsg):
         pass
 
-    # Saves current data into initial file
-    def save(self):
-        pass
+    # Saves current data into file filename
+    def save(self, filename):
+        self._records = []
+        for section in self._sections:
+            section.write(self._records)
+        logging.debug(f"Declaration to write: {self._records} +'{self._footer}'")
+        raw_data = self.HEADER2021
+        for record in self._records:
+            raw_data += "{:04d}{}".format(len(record), record)
+        raw_data += self._footer
+        with open(filename, "w", encoding='cp1251') as taxes:
+            taxes.write(raw_data)
 
     # this method splits declaration data into records stored in self._records
     def _split_records(self, data):
@@ -36,7 +46,7 @@ class DlsgFile:
         while pos < len(data):
             length_field = data[pos: pos + self.LENGTH_SIZE]
             if length_field == (self.FOOTER * len(length_field)):
-                self._footer_len = len(length_field)
+                self._footer = data[pos:]
                 break
             try:
                 length = int(length_field)
@@ -45,7 +55,7 @@ class DlsgFile:
             pos += self.LENGTH_SIZE
             self._records.append(data[pos: pos + length])
             pos = pos + length
-        logging.debug(f"Declaration {self._filename} content: {self._records}")
+        logging.debug(f"Declaration {self._filename} content: {self._records} +'{self._footer}'")
 
     def _split_sections(self):
         while len(self._records) > 0:
@@ -67,3 +77,7 @@ class DlsgSection:
 
     def tag(self) -> str:
         return self._tag
+
+    def write(self, records):
+        records.append(self._tag)
+        records.extend(self._records)
