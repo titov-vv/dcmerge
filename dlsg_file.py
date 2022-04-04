@@ -1,4 +1,5 @@
 import logging
+from copy import deepcopy
 
 
 class DlsgFile:
@@ -38,8 +39,9 @@ class DlsgFile:
             src_size = src.get_child_count()
             for i in range(src_size):
                 child = dlsg.get_section(self.merge_list[section] + f"{i:04d}")
-                child.update_tag(self.merge_list[section] + f"{(dst_size + i):04d}")
-                self._sections.insert(last_idx + 1, child)
+                new_child = deepcopy(child)
+                new_child.update_tag(self.merge_list[section] + f"{(dst_size + i):04d}")
+                self._sections.insert(last_idx + 1, new_child)
                 last_idx += 1
             dst.set_child_count(dst_size + src_size)
 
@@ -59,8 +61,10 @@ class DlsgFile:
     # Returns section from current data structure
     def get_section(self, section_name):
         section = [section for section in self._sections if section.tag() == section_name]
-        if len(section) != 1:
+        if len(section) == 0:
             raise ValueError(f"Section {section_name} was not found")
+        if len(section) > 1:
+            raise ValueError(f"Multiple match for {section_name} found")
         return section[0]
 
     # this method splits declaration data into records stored in self._records
