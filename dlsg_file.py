@@ -33,12 +33,8 @@ class DlsgFile:
         for section in self.merge_list:
             dst = self.get_section(section)
             dst_size = dst.get_child_count()
-            if dst_size:
-                section_to_continue = self.get_section(self.merge_list[section] + f"{(dst_size - 1):04d}")
-            else:
-                logging.debug("No foreign incomes in source file")
-                section_to_continue = self.get_section(section)
-            last_idx = self._sections.index(section_to_continue)
+            last_child = self.get_section(self.merge_list[section] + f"{(dst_size - 1):04d}")
+            last_idx = self._sections.index(last_child)
             src = dlsg.get_section(section)
             src_size = src.get_child_count()
             for i in range(src_size):
