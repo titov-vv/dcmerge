@@ -66,9 +66,9 @@ class DlsgFile:
     def get_section(self, section_name):
         section = [section for section in self._sections if section.tag() == section_name]
         if len(section) == 0:
-            raise ValueError(f"Section {section_name} was not found")
+            raise ValueError(f"Section {section_name} was not found in {self._filename}")
         if len(section) > 1:
-            raise ValueError(f"Multiple match for {section_name} found")
+            raise ValueError(f"Multiple match for {section_name} found in {self._filename}")
         return section[0]
 
     # this method splits declaration data into records stored in self._records
@@ -82,7 +82,7 @@ class DlsgFile:
             try:
                 length = int(length_field)
             except ValueError:
-                raise ValueError(f"Invalid record size at position {pos}: '{length_field}'")
+                raise ValueError(f"Invalid record size at position {pos}: '{length_field}' in {self._filename}")
             pos += self.LENGTH_SIZE
             self._records.append(data[pos: pos + length])
             pos = pos + length
@@ -92,7 +92,7 @@ class DlsgFile:
         while len(self._records) > 0:
             section_name = self._records.pop(0)
             if section_name[0] != self.SECTION_PREFIX:
-                raise ValueError(f"Invalid section prefix: {section_name}")
+                raise ValueError(f"Invalid section prefix: {section_name} in {self._filename}")
             self._sections.append(DlsgSection(section_name, self._records))
         logging.debug(f"Sections loaded: {[s.tag() for s in self._sections]}")
 
