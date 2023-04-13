@@ -3,8 +3,11 @@ from copy import deepcopy
 
 
 class DlsgFile:
+    HEADERS = {
+        2021: "DLSG            Decl20210103FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+        2022: "DLSG            Decl20220103FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+    }
     LENGTH_SIZE = 4
-    HEADER2021 = "DLSG            Decl20210103FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
     FOOTER = '\0'
     SECTION_PREFIX = '@'
     merge_list = {
@@ -21,15 +24,23 @@ class DlsgFile:
 
         with open(self._filename, "r", encoding='cp1251') as taxes:
             raw_data = taxes.read()
-        self.header = raw_data[:len(self.HEADER2021)]
-        if self.header != self.HEADER2021:
-            raise ValueError("Unsupported format of declaration file")
+        self.header = self._header_id(raw_data)
         self._split_records(raw_data)
         self._split_sections()
+
+    # Get header id for a given file
+    def _header_id(self, raw_data) -> int:
+        for header in self.HEADERS:
+            file_header = raw_data[:len(self.HEADERS[header])]
+            if file_header == self.HEADERS[header]:
+                return header
+        raise ValueError("Unsupported format of declaration file")
 
     # Appends data from another DlsgFile object referred by dlsg parameter into current object
     # Only sections from self.merge_list are processed
     def append(self, dlsg):
+        if self.header != dlsg.header:
+            raise ValueError("Files are from different years")
         for section in self.merge_list:
             dst = self.get_section(section)
             dst_size = dst.get_child_count()
@@ -55,7 +66,7 @@ class DlsgFile:
         for section in self._sections:
             section.write(self._records)
         logging.debug(f"Declaration to write: {self._records} +'{self._footer}'")
-        raw_data = self.HEADER2021
+        raw_data = self.HEADERS[self.header]
         for record in self._records:
             raw_data += "{:04d}{}".format(len(record), record)
         raw_data += self._footer
@@ -73,7 +84,7 @@ class DlsgFile:
 
     # this method splits declaration data into records stored in self._records
     def _split_records(self, data):
-        pos = len(self.HEADER2021)
+        pos = len(self.HEADERS[self.header])
         while pos < len(data):
             length_field = data[pos: pos + self.LENGTH_SIZE]
             if length_field == (self.FOOTER * len(length_field)):
