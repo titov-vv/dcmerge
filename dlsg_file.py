@@ -5,7 +5,8 @@ from copy import deepcopy
 class DlsgFile:
     HEADERS = {
         2021: "DLSG            Decl20210103FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
-        2022: "DLSG            Decl20220103FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+        2022: "DLSG            Decl20220103FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+        2023: "DLSG            Decl20230103FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
     }
     LENGTH_SIZE = 4
     FOOTER = '\0'
@@ -34,7 +35,7 @@ class DlsgFile:
             file_header = raw_data[:len(self.HEADERS[header])]
             if file_header == self.HEADERS[header]:
                 return header
-        raise ValueError("Unsupported format of declaration file")
+        raise ValueError("Unsupported format of declaration file (probably not updated for current year)")
 
     # Appends data from another DlsgFile object referred by dlsg parameter into current object
     # Only sections from self.merge_list are processed
